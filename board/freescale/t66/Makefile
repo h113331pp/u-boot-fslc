@@ -6,4 +6,4 @@
 # SPDX-License-Identifier:	GPL-2.0+
 #
 
-obj-y  := t66.o
+obj-y  := t66.o t66_util.o

@@ -182,6 +182,9 @@ obj-$(CONFIG_CMD_UNZIP) += cmd_unzip.o
 ifdef CONFIG_LZMA
 obj-$(CONFIG_CMD_LZMADEC) += cmd_lzmadec.o
 endif
+ifdef CONFIG_CMD_TC                                                      
+obj-$(CONFIG_CMD_TC) += cmd_tc.o                                  
+endif
 ifdef CONFIG_CMD_USB
 obj-y += cmd_usb.o
 obj-y += usb.o usb_hub.o
