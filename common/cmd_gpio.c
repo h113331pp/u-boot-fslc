@@ -21,6 +21,7 @@ enum gpio_cmd {
 	GPIO_SET,
 	GPIO_CLEAR,
 	GPIO_TOGGLE,
+	GPIO_QUERY,
 };
 
 #if defined(CONFIG_DM_GPIO) && !defined(gpio_status)
@@ -139,6 +140,7 @@ static int do_gpio(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		case 's': sub_cmd = GPIO_SET;    break;
 		case 'c': sub_cmd = GPIO_CLEAR;  break;
 		case 't': sub_cmd = GPIO_TOGGLE; break;
+		case 'q': sub_cmd = GPIO_QUERY; break;
 		default:  goto show_usage;
 	}
 
@@ -169,6 +171,8 @@ static int do_gpio(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	if (sub_cmd == GPIO_INPUT) {
 		gpio_direction_input(gpio);
 		value = gpio_get_value(gpio);
+	} else if (sub_cmd == GPIO_QUERY) {
+		value = gpio_get_value(gpio);
 	} else {
 		switch (sub_cmd) {
 			case GPIO_SET:    value = 1; break;
@@ -188,6 +192,6 @@ static int do_gpio(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 U_BOOT_CMD(gpio, 3, 0, do_gpio,
 	"query and control gpio pins",
-	"<input|set|clear|toggle> <pin>\n"
-	"    - input/set/clear/toggle the specified pin\n"
+	"<input|set|clear|toggle|query> <pin>\n"
+	"    - input/set/clear/toggle/query the specified pin\n"
 	"gpio status [<bank> | <pin>]");
