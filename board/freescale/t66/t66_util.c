@@ -133,7 +133,8 @@ void t66_power_off(void)
 	printf("t66 power off now...\n");
 	t66_set_softoff_pin(GPIO_LOW);
 	t66_toggle_last_state(SHUTDOWN);
-	mdelay(500);
+	while(1) {} ;
+	printf("Error, why you see this message?\n");
 }
 
 void t66_cpld_alive_response(void)

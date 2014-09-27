@@ -27,6 +27,7 @@
 #include <i2c.h>
 #include <power/pmic.h>
 #include <power/pfuze100_pmic.h>
+#include <t66/mx6_util.h>
 DECLARE_GLOBAL_DATA_PTR;
 
 #define UART_PAD_CTRL  (PAD_CTL_PUS_100K_UP |			\
@@ -64,7 +65,7 @@ iomux_v3_cfg_t const uart1_pads[] = {
 };
 
 iomux_v3_cfg_t const enet_pads[] = {
-	MX6_PAD_ENET_MDIO__ENET_MDIO		| MUX_PAD_CTRL(ENET_PAD_CTRL),
+	MX6_PAD_ENET_MDIO__ENET_MDIO	| MUX_PAD_CTRL(ENET_PAD_CTRL),
 	MX6_PAD_ENET_MDC__ENET_MDC		| MUX_PAD_CTRL(ENET_PAD_CTRL),
 	MX6_PAD_RGMII_TXC__RGMII_TXC	| MUX_PAD_CTRL(ENET_PAD_CTRL),
 	MX6_PAD_RGMII_TD0__RGMII_TD0	| MUX_PAD_CTRL(ENET_PAD_CTRL),
@@ -453,6 +454,12 @@ int board_init(void)
 #endif
 	setup_i2c(1, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
 
+	/* make cpld check t66 still alive */
+	t66_cpld_alive_response();
+
+	/* setup t66 power led */
+	t66_power_led(1);
+
 	return 0;
 }
 
@@ -476,8 +483,181 @@ int board_late_init(void)
 	return 0;
 }
 
+static int project = 0;
+static int pcb = 0;
 int checkboard(void)
 {
-	puts("Board: MX6-SabreSD\n");
+	puts("Board: MX6-SabreSD ");
+
+	project = t66_get_project_version();
+	pcb = t66_get_pcb_version();
+	switch(project) {
+	case 0:
+		printf(" t66(");
+		break;
+	case 1:
+		printf(" t67(");
+		break;
+	case 2:
+		printf(" A66(");
+		break;
+	default:
+		printf("unknown");
+	}
+	switch(pcb) {
+	case 0:
+		printf("EVT");
+		break;
+	case 1:
+		printf("DVT");
+		break;
+	case 2:
+		printf("PVT");
+		break;
+	default:
+		printf("unknown");
+	}
+	printf(")\n");
+
 	return 0;
 }
+
+#ifdef CONFIG_MISC_INIT_R
+void t66_set_board_version(void)
+{
+	switch (pcb) {
+		case 0:
+			setenv("board", "EVT");
+			break;
+		case 1:
+			setenv("board", "DVT");
+			break;
+		case 2:
+			setenv("board", "PVT");
+			break;
+		default:
+			setenv("board", "UND");
+			printf("Undetermined board version\n");
+	}
+
+	switch (project) {
+		case 0:
+			setenv("system-product-name", "t66");
+			/* we don't have derived product like t66c, just set t66 */
+			setenv("product-name", "t66");
+			break;
+		case 1:
+			setenv("system-product-name", "t67");
+			setenv("product-name", "t67");
+			break;
+		case 2:
+			setenv("system-product-name", "A66");
+			setenv("product-name", "A66");
+		default:
+			printf("Undetermined project name\n");
+	}
+	saveenv();
+}
+
+static void t66_set_15_sec_circuit(void)
+{
+	t66_toggle_last_state(LAST_STATE);
+	mdelay(500);
+}
+
+static int t66_check_first_power_on(void)
+{
+	int ret = 0;
+	/* t66 */
+	if (project == 0) {
+		if (pcb == 0)
+			ret = t66_gpio_read_value(3, 31);
+		else if (pcb >= 1)
+			ret = t66_gpio_read_value(4, 15);
+	}
+	/* t67 */
+	else if (project == 1)
+	{
+		ret = t66_gpio_read_value(4, 15);
+	}
+	/* A66 */
+	else if (project == 2)
+	{
+		ret = t66_gpio_read_value(4, 15);
+	}
+
+	return ret;
+}
+
+static void t66_check_last_state(void)
+{
+	char * flag = getenv ("ac-flag");
+	char * type = getenv ("ac-type");
+	char * init = getenv ("initialized");
+#define IS_POWER_RESUME_SET_LAST_STATE	(strncmp(type, "laststate", 9) == 0)
+#define IS_POWER_RESUME_SET_POWER_OFF	(strncmp(type, "poweroff", 8) == 0)
+#define IS_T66_SHUTDOWN_NORMAL			(strncmp(flag, "0", 1) == 0)
+#define IS_T66_FIRST_POWER_ON			(t66_check_first_power_on() == 1)
+
+	/* don't shutdown & open OTG if we use MFGtool to install an empty board */
+	if (strncmp(init, "true", 4) != 0 ) {
+		return;
+	}
+
+	/* start communicate with CPLD */
+	t66_set_softoff_pin(GPIO_LOW);
+
+	/* if t66 first poweron */
+	if (IS_T66_FIRST_POWER_ON) {
+		t66_enable_usb_hub(0);
+		mdelay(2000);
+		if (IS_T66_SHUTDOWN_NORMAL || IS_POWER_RESUME_SET_POWER_OFF)
+			t66_power_off();
+		if ((! IS_T66_SHUTDOWN_NORMAL) && IS_POWER_RESUME_SET_LAST_STATE)
+			t66_set_15_sec_circuit();
+	}
+
+	/* end communicate with CPLD */
+	t66_set_softoff_pin(GPIO_HIGH);
+}
+
+/* touch reset pin of devices according to EE's request */
+void t66_reset_device(void)
+{
+	/* vga */
+
+	/* lan */
+
+	/* usb */
+
+	/* audio */
+	t66_reset_audio();
+	/* emmc */
+	t66_reset_emmc();
+}
+
+int misc_init_r(void)
+{
+	char * disp_detect = getenv ("disp_detect");
+	char * model = getenv ("system-product-name");
+	u32 disp_type = 0;
+
+	t66_check_last_state();
+	t66_enable_usb_hub(1);
+	t66_reset_device();
+
+	if  ( strncmp(model, "und", 3) == 0 )
+		t66_set_board_version();
+
+	if ( strncmp(disp_detect, "on", 2) == 0 ) {
+		/* disp_type: 1 ==> DVI, 0 ==> VGA */
+		disp_type = t66_gpio_read_value(3, 21);
+		if (disp_type == 1)
+			setenv("disp0_src", "hdmi");
+		else
+			setenv("disp0_src", "vga");
+	}
+
+	return 0;
+}
+#endif /* CONFIG_MISC_INIT_R */

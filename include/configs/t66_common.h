@@ -188,6 +188,7 @@
 #define CONFIG_ARP_TIMEOUT     200UL
 
 /* Miscellaneous configurable options */
+#define CONFIG_MISC_INIT_R
 #define CONFIG_SYS_LONGHELP
 #define CONFIG_SYS_PROMPT              "t66#"
 #define CONFIG_SYS_HUSH_PARSER
