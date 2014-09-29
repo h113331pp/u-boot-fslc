@@ -300,6 +300,7 @@ struct mmc {
 	ushort rca;
 	char part_config;
 	char part_num;
+	char boot_part_num;
 	uint tran_speed;
 	uint read_bl_len;
 	uint write_bl_len;
@@ -348,6 +349,8 @@ int mmc_rpmb_read(struct mmc *mmc, void *addr, unsigned short blk,
 		  unsigned short cnt, unsigned char *key);
 int mmc_rpmb_write(struct mmc *mmc, void *addr, unsigned short blk,
 		   unsigned short cnt, unsigned char *key);
+int mmc_switch_boot_part(int dev_num, unsigned int part_num);
+int sd_switch_boot_part(int dev_num, unsigned int part_num);
 /**
  * Start device initialization and return immediately; it does not block on
  * polling OCR (operation condition register) status.  Then you should call
