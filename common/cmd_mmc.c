@@ -634,55 +634,6 @@ static int do_mmc_loadimg(cmd_tbl_t *cmdtp, int flag, int argc, char * const arg
 
 	return (n == cnt) ? CMD_RET_SUCCESS : CMD_RET_FAILURE;
 }
-static int do_mmc_bootpart(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
-{
-	int dev, part = -1;
-	struct mmc *mmc;
-
-	if (argc == 1) {
-		dev = curr_device;
-	} else if (argc == 2) {
-		dev = (int)simple_strtoul(argv[1], NULL, 10);
-	} else if (argc == 3) {
-		dev = (int)simple_strtoul(argv[1], NULL, 10);
-		part = (int)simple_strtoul(argv[2], NULL, 10);
-	} else
-		return CMD_RET_USAGE;
-
-	mmc = find_mmc_device(dev);
-	if (!mmc) {
-		printf("no mmc device at slot %x\n", dev);
-		return CMD_RET_FAILURE;
-	}
-
-	mmc_init(mmc);
-
-	if (mmc->part_config == MMCPART_NOAVAILABLE) {
-		printf("Card doesn't support boot partition feature\n");
-		return CMD_RET_SUCCESS;
-	}
-
-	if (part != -1) {
-		int ret;
-
-		if (part != mmc->boot_part_num) {
-			if (IS_SD(mmc))
-				ret = sd_switch_boot_part(dev, part);
-			else
-				ret = mmc_switch_boot_part(dev, part);
-
-			if (!ret)
-				mmc->boot_part_num = part;
-			printf("Switch boot partition to partition #%d, %s\n",
-				part, (!ret) ? "OK" : "ERROR");
-		}
-	}
-
-	printf("Device %d: boot partition %d is for boot\n",
-		dev, mmc->boot_part_num);
-
-	return CMD_RET_SUCCESS;
-}
 
 static cmd_tbl_t cmd_mmc[] = {
 	U_BOOT_CMD_MKENT(info, 1, 0, do_mmcinfo, "", ""),
@@ -704,7 +655,6 @@ static cmd_tbl_t cmd_mmc[] = {
 #endif
 	U_BOOT_CMD_MKENT(setdsr, 2, 0, do_mmc_setdsr, "", ""),
 	U_BOOT_CMD_MKENT(loadimg, 3, 0, do_mmc_loadimg, "", ""),
-	U_BOOT_CMD_MKENT(bootpart, 3, 0, do_mmc_bootpart, "", ""),
 };
 
 static int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
@@ -763,7 +713,6 @@ U_BOOT_CMD(
 #endif
 	"mmc setdsr <value> - set DSR register value\n"
 	"mmc loadimg addr blk# - load kernek/initrd by specify it's start offset in mmc\n"
-	"mmc bootpart [dev] [part] - show or set boot partition\n"
 	);
 
 /* Old command kept for compatibility. Same as 'mmc info' */

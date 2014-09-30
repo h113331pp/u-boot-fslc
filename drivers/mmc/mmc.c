@@ -963,7 +963,6 @@ static int mmc_startup(struct mmc *mmc)
 	 * For SD, its erase group is always one sector
 	 */
 	mmc->erase_grp_size = 1;
-	mmc->boot_part_num = 0;
 	mmc->part_config = MMCPART_NOAVAILABLE;
 	if (!IS_SD(mmc) && (mmc->version >= MMC_VERSION_4)) {
 		/* check  ext_csd version and capacity */
@@ -1029,10 +1028,8 @@ static int mmc_startup(struct mmc *mmc)
 
 		/* store the partition info of emmc */
 		if ((ext_csd[EXT_CSD_PARTITIONING_SUPPORT] & PART_SUPPORT) ||
-		    ext_csd[EXT_CSD_BOOT_MULT]) {
-				mmc->part_config = ext_csd[EXT_CSD_PART_CONF];
-				mmc->boot_part_num = (ext_csd[EXT_CSD_PART_CONF] >> 3) & 0x7;
-		}
+		    ext_csd[EXT_CSD_BOOT_MULT])
+			mmc->part_config = ext_csd[EXT_CSD_PART_CONF];
 
 		mmc->capacity_boot = ext_csd[EXT_CSD_BOOT_MULT] << 17;
 
@@ -1571,118 +1568,3 @@ int mmc_set_rst_n_function(struct mmc *mmc, u8 enable)
 			  enable);
 }
 #endif
-
-int sd_switch_boot_part(int dev_num, unsigned int part_num)
-{
-	return 0;
-}
-
-#define EXT_CSD_BOOT_BUS_WIDTH_1BIT	 	0
-#define EXT_CSD_BOOT_BUS_WIDTH_4BIT	 	1
-#define EXT_CSD_BOOT_BUS_WIDTH_8BIT		2
-#define EXT_CSD_BOOT_BUS_WIDTH_DDR		(1 << 4)
-#define MMC_MODE_HS		0x001
-#define MMC_MODE_HS_52MHz	0x002
-#define MMC_MODE_4BIT		0x100
-#define MMC_MODE_8BIT		0x200
-#define EMMC_MODE_4BIT_DDR	0x400
-#define EMMC_MODE_8BIT_DDR	0x800
-#define MMC_MODE_SPI		0x010
-#define MMC_MODE_HC		0x020
-int mmc_switch_boot_part(int dev_num, unsigned int part_num)
-{
-	struct mmc *mmc = find_mmc_device(dev_num);
-	char ext_csd[512] = { 0 };
-	int err;
-	char boot_config;
-	char boot_bus_width, card_boot_bus_width;
-
-	/* Partition must be -
-		0 - user area
-		1 - boot partition 1
-		2 - boot partition 2
-	*/
-	if (part_num > 2) {
-		printf("Wrong partition id - "
-			"0 (user area), 1 (boot1), 2 (boot2)\n");
-		return 1;
-	}
-
-	/* Before calling this func, "mmc" struct must have been initialized */
-	if (mmc->version < MMC_VERSION_4) {
-		printf("Error: invalid mmc version! "
-			"mmc version is below version 4!");
-		return -1;
-	}
-
-	err = mmc_send_ext_csd(mmc, ext_csd);
-	if (err) {
-		printf("Warning: fail to get ext csd for MMC!\n");
-		goto err_rtn;
-	}
-
-	/* Leave access to current partition as is */
-	boot_config = ext_csd[EXT_CSD_PART_CONF] &	PART_ACCESS_MASK;
-
-	/* Enable boot from that partition and boot_ack bit */
-	boot_config |= (char)(EXT_CSD_BOOT_PART_NUM(part_num) | EXT_CSD_BOOT_ACK(1));
-
-	err = mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL,
-			EXT_CSD_PART_CONF, boot_config);
-	if (err) {
-		printf("Error: fail to send SWITCH command to card "
-			"to swich partition for access!\n");
-		goto err_rtn;
-	}
-
-	/* Now check whether it works */
-	err = mmc_send_ext_csd(mmc, ext_csd);
-	if (err) {
-		printf("Warning: fail to get ext csd for MMC!\n");
-		goto err_rtn;
-	}
-
-	if (boot_config != ext_csd[EXT_CSD_PART_CONF]) {
-		printf("Warning: Boot partition switch failed!\n");
-		goto err_rtn;
-	} else
-		mmc->part_config = ext_csd[EXT_CSD_PART_CONF];
-
-	/* Program boot_bus_width field for eMMC fastboot mode
-	 * according to this card's capabilities
-	 */
-	if (mmc->card_caps & EMMC_MODE_8BIT_DDR)
-		boot_bus_width =  EXT_CSD_BOOT_BUS_WIDTH_DDR |
-			EXT_CSD_BOOT_BUS_WIDTH_8BIT;
-	else if (mmc->card_caps & EMMC_MODE_4BIT_DDR)
-		boot_bus_width =  EXT_CSD_BOOT_BUS_WIDTH_DDR |
-			EXT_CSD_BOOT_BUS_WIDTH_4BIT;
-	else if (mmc->card_caps & MMC_MODE_8BIT)
-		boot_bus_width = EXT_CSD_BOOT_BUS_WIDTH_8BIT;
-	else if (mmc->card_caps & MMC_MODE_4BIT)
-		boot_bus_width = EXT_CSD_BOOT_BUS_WIDTH_4BIT;
-	else
-		boot_bus_width = 0;
-
-	err = mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL,
-		EXT_CSD_BOOT_BUS_WIDTH, boot_bus_width);
-
-	/* Ensure that it programmed properly */
-	err = mmc_send_ext_csd(mmc, ext_csd);
-	if (err) {
-		printf("Warning: fail to get ext csd for MMC!\n");
-		goto err_rtn;
-	}
-
-	card_boot_bus_width = ext_csd[EXT_CSD_BOOT_BUS_WIDTH];
-	if (card_boot_bus_width != boot_bus_width) {
-		printf("Warning: current boot_bus_width, 0x%x, is "
-			"not same as requested boot_bus_width 0x%x!\n",
-			card_boot_bus_width, boot_bus_width);
-		goto err_rtn;
-	}
-
-	return 0;
-err_rtn:
-	return -1;
-}
