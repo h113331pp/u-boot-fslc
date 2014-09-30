@@ -634,6 +634,30 @@ static int do_mmc_loadimg(cmd_tbl_t *cmdtp, int flag, int argc, char * const arg
 
 	return (n == cnt) ? CMD_RET_SUCCESS : CMD_RET_FAILURE;
 }
+static int do_mmc_bootpart(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	int dev;
+	struct mmc *mmc;
+	u8 part_num;
+
+	if (argc != 3)
+		return CMD_RET_USAGE;
+
+	dev = simple_strtoul(argv[1], NULL, 10);
+	part_num = simple_strtoul(argv[2], NULL, 10);
+
+	mmc = init_mmc_device(dev, false);
+	if (!mmc)
+		return CMD_RET_FAILURE;
+
+	if (IS_SD(mmc)) {
+		puts("PARTITION_CONFIG only exists on eMMC\n");
+		return CMD_RET_FAILURE;
+	}
+
+	/* acknowledge to be sent during boot operation */
+	return mmc_set_part_conf(mmc, 1, part_num, 1);
+}
 
 static cmd_tbl_t cmd_mmc[] = {
 	U_BOOT_CMD_MKENT(info, 1, 0, do_mmcinfo, "", ""),
@@ -655,6 +679,7 @@ static cmd_tbl_t cmd_mmc[] = {
 #endif
 	U_BOOT_CMD_MKENT(setdsr, 2, 0, do_mmc_setdsr, "", ""),
 	U_BOOT_CMD_MKENT(loadimg, 3, 0, do_mmc_loadimg, "", ""),
+	U_BOOT_CMD_MKENT(bootpart, 3, 0, do_mmc_bootpart, "", ""),
 };
 
 static int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
@@ -713,6 +738,7 @@ U_BOOT_CMD(
 #endif
 	"mmc setdsr <value> - set DSR register value\n"
 	"mmc loadimg addr blk# - load kernek/initrd by specify it's start offset in mmc\n"
+	"mmc bootpart [dev] [part] - set boot partition(a wrapper of mmc partconf)\n"
 	);
 
 /* Old command kept for compatibility. Same as 'mmc info' */
