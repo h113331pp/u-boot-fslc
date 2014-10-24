@@ -8,6 +8,7 @@
  */
 
 #include <common.h>
+#include <netdev.h>
 #include <asm/errno.h>
 #include <asm/io.h>
 #include <asm/arch/imx-regs.h>
@@ -147,6 +148,9 @@ int print_cpuinfo(void)
 int cpu_eth_init(bd_t *bis)
 {
 	int rc = -ENODEV;
+#if defined(CONFIG_PCI)
+	rc = pci_eth_init(bis);
+#endif
 
 #if defined(CONFIG_FEC_MXC)
 	rc = fecmxc_initialize(bis);
