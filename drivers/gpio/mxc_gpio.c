@@ -7,6 +7,7 @@
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
+#include <t66/mx6_util.h>
 #include <common.h>
 #include <asm/arch/imx-regs.h>
 #include <asm/gpio.h>
@@ -91,18 +92,9 @@ int gpio_set_value(unsigned gpio, int value)
 
 int gpio_get_value(unsigned gpio)
 {
-	unsigned int port = GPIO_TO_PORT(gpio);
-	struct gpio_regs *regs;
-	u32 val;
+	unsigned int val;
 
-	if (port >= ARRAY_SIZE(gpio_ports))
-		return -1;
-
-	gpio &= 0x1f;
-
-	regs = (struct gpio_regs *)gpio_ports[port];
-
-	val = (readl(&regs->gpio_psr) >> gpio) & 0x01;
+	val = t66_gpio_read_value((gpio / 32) + 1, (gpio % 32));
 
 	return val;
 }
