@@ -590,6 +590,74 @@ static int do_mmc_setdsr(cmd_tbl_t *cmdtp, int flag,
 	}
 	return ret;
 }
+static int do_mmc_loadimg(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	struct mmc *mmc;
+	u32 blk, cnt, n;
+	void *addr;
+	image_header_t *hdr;
+
+	if (argc != 3)
+		return CMD_RET_USAGE;
+
+	addr = (void *)simple_strtoul(argv[1], NULL, 16);
+	blk = simple_strtoul(argv[2], NULL, 16);
+
+	mmc = init_mmc_device(curr_device, false);
+	if (!mmc)
+		return CMD_RET_FAILURE;
+
+	/* read uImage header(2 blocks) */
+	n = mmc->block_dev.block_read(curr_device, blk, 2, addr);
+	switch (genimg_get_format ((void *)addr)) {
+		case IMAGE_FORMAT_LEGACY:
+			hdr = (image_header_t *)addr;
+
+			show_boot_progress (57);
+			image_print_contents (hdr);
+
+			cnt = image_get_image_size (hdr);
+			break;
+		default:
+			show_boot_progress (-57);
+			puts ("** Unknown image type\n");
+			return CMD_RET_FAILURE;
+	}
+	cnt = (cnt / 512 ) + 1;
+	printf("\nMMC read: dev # %d, block # %d, count %d ... ",
+	       curr_device, blk, cnt);
+
+	n = mmc->block_dev.block_read(curr_device, blk, cnt, addr);
+	/* flush cache after read */
+	flush_cache((ulong)addr, cnt * 512); /* FIXME */
+	printf("%d blocks read: %s\n", n, (n == cnt) ? "OK" : "ERROR");
+
+	return (n == cnt) ? CMD_RET_SUCCESS : CMD_RET_FAILURE;
+}
+static int do_mmc_bootpart(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	int dev;
+	struct mmc *mmc;
+	u8 part_num;
+
+	if (argc != 3)
+		return CMD_RET_USAGE;
+
+	dev = simple_strtoul(argv[1], NULL, 10);
+	part_num = simple_strtoul(argv[2], NULL, 10);
+
+	mmc = init_mmc_device(dev, false);
+	if (!mmc)
+		return CMD_RET_FAILURE;
+
+	if (IS_SD(mmc)) {
+		puts("PARTITION_CONFIG only exists on eMMC\n");
+		return CMD_RET_FAILURE;
+	}
+
+	/* acknowledge to be sent during boot operation */
+	return mmc_set_part_conf(mmc, 1, part_num, 1);
+}
 
 static cmd_tbl_t cmd_mmc[] = {
 	U_BOOT_CMD_MKENT(info, 1, 0, do_mmcinfo, "", ""),
@@ -610,6 +678,8 @@ static cmd_tbl_t cmd_mmc[] = {
 	U_BOOT_CMD_MKENT(rpmb, CONFIG_SYS_MAXARGS, 1, do_mmcrpmb, "", ""),
 #endif
 	U_BOOT_CMD_MKENT(setdsr, 2, 0, do_mmc_setdsr, "", ""),
+	U_BOOT_CMD_MKENT(loadimg, 3, 0, do_mmc_loadimg, "", ""),
+	U_BOOT_CMD_MKENT(bootpart, 3, 0, do_mmc_bootpart, "", ""),
 };
 
 static int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
@@ -667,6 +737,8 @@ U_BOOT_CMD(
 	"mmc rpmb counter - read the value of the write counter\n"
 #endif
 	"mmc setdsr <value> - set DSR register value\n"
+	"mmc loadimg addr blk# - load kernek/initrd by specify it's start offset in mmc\n"
+	"mmc bootpart [dev] [part] - set boot partition(a wrapper of mmc partconf)\n"
 	);
 
 /* Old command kept for compatibility. Same as 'mmc info' */
