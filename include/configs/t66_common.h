@@ -101,6 +101,7 @@
 #define CONFIG_CMD_SETEXPR
 #undef CONFIG_CMD_IMLS
 
+#define CONFIG_ZERO_BOOTDELAY_CHECK
 #define CONFIG_BOOTDELAY               0
 
 #define CONFIG_LOADADDR                 0x10800000
