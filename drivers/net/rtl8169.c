@@ -47,6 +47,8 @@
 #include <asm/io.h>
 #include <pci.h>
 
+extern void imx_get_mac_from_fuse(int dev_id, unsigned char *mac);
+
 #undef DEBUG_RTL8169
 #undef DEBUG_RTL8169_TX
 #undef DEBUG_RTL8169_RX
@@ -102,8 +104,10 @@ static int media[MAX_UNITS] = { -1, -1, -1, -1, -1, -1, -1, -1 };
 #define phys_to_bus(a)	pci_phys_to_mem((pci_dev_t)dev->priv, (phys_addr_t)a)
 
 enum RTL8169_registers {
-	MAC0 = 0,		/* Ethernet hardware address. */
-	MAR0 = 8,		/* Multicast filter. */
+	MAC0 = 0x00,		/* Ethernet hardware address. */
+	MAC4 = 0x04,
+	MAR0 = 0x08,		/* Multicast filter. */
+	CustomLED = 0x18,
 	TxDescStartAddrLow = 0x20,
 	TxDescStartAddrHigh = 0x24,
 	TxHDescStartAddrLow = 0x28,
@@ -130,6 +134,8 @@ enum RTL8169_registers {
 	TBI_ANAR = 0x68,
 	TBI_LPAR = 0x6A,
 	PHYstatus = 0x6C,
+	ERIDR = 0x70,
+	ERIAR = 0x74,
 	RxMaxSize = 0xDA,
 	CPlusCmd = 0xE0,
 	RxDescStartAddrLow = 0xE4,
@@ -230,6 +236,19 @@ enum RTL8169_register_content {
 
 	/*_TBICSRBit*/
 	TBILinkOK = 0x02000000,
+
+	/* ERI access */
+	ERIAR_Flag = 0x80000000,
+	ERIAR_Write = 0x80000000,
+	ERIAR_Read = 0x00000000,
+	ERIAR_Addr_Align = 4, /* ERI access register address must be 4 byte alignment */
+	ERIAR_ExGMAC = 0,
+	ERIAR_MSIX = 1,
+	ERIAR_ASF = 2,
+	ERIAR_OOB = 2,
+	ERIAR_Type_shift = 16,
+	ERIAR_ByteEn = 0x0f,
+	ERIAR_ByteEn_shift = 12,
 };
 
 static struct {
@@ -355,6 +374,151 @@ int mdio_read(int RegAddr)
 		}
 	}
 	return value;
+}
+
+u32 rtl8168_eri_read(int addr, int len, int type)
+{
+	int i, val_shift, shift = 0;
+	u32 value1 = 0, value2 = 0, mask;
+
+	if (len > 4 || len <= 0)
+		return -1;
+
+	while (len > 0) {
+		val_shift = addr % ERIAR_Addr_Align;
+		addr = addr & ~0x3;
+
+		RTL_W32(ERIAR,
+				ERIAR_Read |
+				type << ERIAR_Type_shift |
+				ERIAR_ByteEn << ERIAR_ByteEn_shift |
+				addr);
+
+		for (i = 0; i < 10; i++) {
+			udelay(100);
+
+			/* Check if the RTL8168 has completed ERI read */
+			if (RTL_R32(ERIAR) & ERIAR_Flag)
+				break;
+		}
+
+		if (len == 1)       mask = (0xFF << (val_shift * 8)) & 0xFFFFFFFF;
+		else if (len == 2)  mask = (0xFFFF << (val_shift * 8)) & 0xFFFFFFFF;
+		else if (len == 3)  mask = (0xFFFFFF << (val_shift * 8)) & 0xFFFFFFFF;
+		else            mask = (0xFFFFFFFF << (val_shift * 8)) & 0xFFFFFFFF;
+
+		value1 = RTL_R32(ERIDR) & mask;
+		value2 |= (value1 >> val_shift * 8) << shift * 8;
+
+		if (len <= 4 - val_shift) {
+			len = 0;
+		} else {
+			len -= (4 - val_shift);
+			shift = 4 - val_shift;
+			addr += 4;
+		}
+	}
+
+	return value2;
+}
+
+int rtl8168_eri_write(int addr, int len, u32 value, int type)
+{
+	int i, val_shift, shift = 0;
+	u32 value1 = 0, mask;
+
+	if (len > 4 || len <= 0)
+		return -1;
+
+	while (len > 0) {
+		val_shift = addr % ERIAR_Addr_Align;
+		addr = addr & ~0x3;
+
+		if (len == 1)       mask = (0xFF << (val_shift * 8)) & 0xFFFFFFFF;
+		else if (len == 2)  mask = (0xFFFF << (val_shift * 8)) & 0xFFFFFFFF;
+		else if (len == 3)  mask = (0xFFFFFF << (val_shift * 8)) & 0xFFFFFFFF;
+		else            mask = (0xFFFFFFFF << (val_shift * 8)) & 0xFFFFFFFF;
+
+		value1 = rtl8168_eri_read(addr, 4, type) & ~mask;
+		value1 |= ((value << val_shift * 8) >> shift * 8);
+
+		RTL_W32(ERIDR, value1);
+		RTL_W32(ERIAR,
+				ERIAR_Write |
+				type << ERIAR_Type_shift |
+				ERIAR_ByteEn << ERIAR_ByteEn_shift |
+				addr);
+
+		for (i = 0; i < 10; i++) {
+			udelay(100);
+
+			/* Check if the RTL8168 has completed ERI write */
+			if (!(RTL_R32(ERIAR) & ERIAR_Flag))
+				break;
+		}
+
+		if (len <= 4 - val_shift) {
+			len = 0;
+		} else {
+			len -= (4 - val_shift);
+			shift = 4 - val_shift;
+			addr += 4;
+		}
+	}
+
+	return 0;
+}
+
+#define BIT_2 (1 << 2)
+static void
+rtl8168_set_wol(void)
+{
+#define PMEnable (0x01)
+#define LinkUp (0x10)
+#define UWF (0x10)
+#define BWF (0x40)
+#define MWF (0x20)
+#define LanWake (0x02)
+#define MagicPacket (0x20)
+
+	static struct {
+		u16 reg;
+		u8  mask;
+	} cfg[] = {
+		{ Config1, PMEnable },
+		{ Config3, LinkUp },
+		{ Config5, UWF },
+		{ Config5, BWF },
+		{ Config5, MWF },
+		{ Config5, LanWake },
+		{ Config3, MagicPacket },
+	};
+	int i,tmp;
+	u32 csi_tmp;
+
+	RTL_W8(Cfg9346, Cfg9346_Unlock);
+	csi_tmp = rtl8168_eri_read(0xDE, 1, ERIAR_ExGMAC);
+	char * wol = getenv ("wol");
+	if (strncmp(wol, "off", 3) == 0)
+	{
+		printf("disable wol\n");
+		csi_tmp = csi_tmp & (0xfffffffe);
+		RTL_W8(Config2, RTL_R8(Config2) | BIT_2);
+	}
+	else
+	{
+		printf("enable wol\n");
+		csi_tmp = csi_tmp | (0x00000001);
+		RTL_W8(Config2, RTL_R8(Config2) & ~BIT_2);
+	}
+	rtl8168_eri_write(0xDE, 1, csi_tmp, ERIAR_ExGMAC);
+	RTL_W8(Cfg9346, Cfg9346_Lock);
+}
+
+static void rtl8168_set_custom_led(void)
+{
+	/*LED2 as act, LED0 as 10, 100, LED1 as 1G*/
+	RTL_W16(CustomLED, 0x0842);
 }
 
 static int rtl8169_init_board(struct eth_device *dev)
@@ -794,9 +958,26 @@ static int rtl_init(struct eth_device *dev, bd_t *bis)
 	if (rc)
 		return rc;
 
-	/* Get MAC address.  FIXME: read EEPROM */
+	/* read MAC address from imx fuse */
+	u16 mac_addr[3];
+	unsigned char temp_mac_addr[6];
+	imx_get_mac_from_fuse(0, temp_mac_addr);
+
+	/* re-arrange mac address */
+	*(u32*)&mac_addr[0] = (temp_mac_addr[0] + (temp_mac_addr[1] << 8) + (temp_mac_addr[2] << 16) + (temp_mac_addr[3] << 24));
+	*(u16*)&mac_addr[2] = (temp_mac_addr[4] + (temp_mac_addr[5] << 8));
+
+	/* write MAC address back to rtl8169 register */
+	RTL_W8(Cfg9346, Cfg9346_Unlock);
+	RTL_W32(MAC0, (mac_addr[1] << 16) | mac_addr[0]);
+	RTL_W16(MAC4, mac_addr[2]);
+	RTL_W8(Cfg9346, Cfg9346_Lock);
+
+    /* Get MAC address.  FIXME: read EEPROM */
 	for (i = 0; i < MAC_ADDR_LEN; i++)
 		dev->enetaddr[i] = RTL_R8(MAC0 + i);
+
+	rtl8168_set_wol();
 
 #ifdef DEBUG_RTL8169
 	printf("chipset = %d\n", tpc->chipset);
@@ -905,6 +1086,9 @@ static int rtl_init(struct eth_device *dev, bd_t *bis)
 		     (RTL_R32(TBICSR) & TBILinkOK) ? "OK" : "Failed");
 #endif
 	}
+
+	/* set led */
+	rtl8168_set_custom_led();
 
 	return 1;
 }
