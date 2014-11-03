@@ -418,6 +418,9 @@ static int do_mmc_dev(cmd_tbl_t *cmdtp, int flag,
 		return CMD_RET_USAGE;
 	}
 
+	if (dev == 3)
+		dev = 2;
+
 	mmc = init_mmc_device(dev, true);
 	if (!mmc)
 		return CMD_RET_FAILURE;
@@ -645,6 +648,9 @@ static int do_mmc_bootpart(cmd_tbl_t *cmdtp, int flag, int argc, char * const ar
 
 	dev = simple_strtoul(argv[1], NULL, 10);
 	part_num = simple_strtoul(argv[2], NULL, 10);
+
+	if (dev == 3)
+		dev = 2;
 
 	mmc = init_mmc_device(dev, false);
 	if (!mmc)
