@@ -102,6 +102,7 @@ static int do_gpio ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 				printf("DVT\n");
 				break;
 			case 2:
+			case 3:
 				printf("PVT\n");
 				break;
 			default:
