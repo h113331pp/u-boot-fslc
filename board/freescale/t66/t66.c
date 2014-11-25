@@ -59,6 +59,123 @@ int dram_init(void)
 	return 0;
 }
 
+iomux_v3_cfg_t const gpio_pads[] = {
+	/* project detect */
+	MX6_PAD_NANDF_D1__GPIO2_IO01		| MUX_PAD_CTRL(NO_PAD_CTRL),
+	MX6_PAD_NANDF_D2__GPIO2_IO02		| MUX_PAD_CTRL(NO_PAD_CTRL),
+	MX6_PAD_NANDF_D3__GPIO2_IO03		| MUX_PAD_CTRL(NO_PAD_CTRL),
+
+	/* PCB detect */
+	MX6_PAD_NANDF_D4__GPIO2_IO04		| MUX_PAD_CTRL(NO_PAD_CTRL),
+	MX6_PAD_NANDF_D5__GPIO2_IO05		| MUX_PAD_CTRL(NO_PAD_CTRL),
+
+	/* orange power led, t66 EVT */
+	MX6_PAD_GPIO_1__GPIO1_IO01			| MUX_PAD_CTRL(NO_PAD_CTRL),
+	/* orange power led, t66 DVT & PVT */
+	MX6_PAD_EIM_D22__GPIO3_IO22			| MUX_PAD_CTRL(NO_PAD_CTRL),
+	/* blue power led */
+	MX6_PAD_GPIO_18__GPIO7_IO13			| MUX_PAD_CTRL(NO_PAD_CTRL),
+
+	/* AUTO SDN, t66 EVT */
+	MX6_PAD_EIM_D31__GPIO3_IO31			| MUX_PAD_CTRL(NO_PAD_CTRL),
+	/* AUTO SDN, t66 DVT & PVT */
+	MX6_PAD_KEY_ROW4__GPIO4_IO15		| MUX_PAD_CTRL(NO_PAD_CTRL),
+
+	/* etnernet reset */
+	MX6_PAD_ENET_CRS_DV__GPIO1_IO25		| MUX_PAD_CTRL(NO_PAD_CTRL),
+	/* pcie reset */
+	MX6_PAD_GPIO_19__GPIO4_IO05			| MUX_PAD_CTRL(NO_PAD_CTRL),
+
+	/* PWR_BTN_SNS */
+	MX6_PAD_EIM_CS0__GPIO2_IO23			| MUX_PAD_CTRL(NO_PAD_CTRL),
+
+	/* soft off */
+	MX6_PAD_KEY_COL4__GPIO4_IO14		| MUX_PAD_CTRL(NO_PAD_CTRL),
+
+	/* power button detect */
+	MX6_PAD_GPIO_17__GPIO7_IO12			| MUX_PAD_CTRL(NO_PAD_CTRL),
+
+	/* last state detect */
+	MX6_PAD_GPIO_8__GPIO1_IO08			| MUX_PAD_CTRL(NO_PAD_CTRL),
+
+	/* audio reset */
+	MX6_PAD_KEY_COL2__GPIO4_IO10		| MUX_PAD_CTRL(NO_PAD_CTRL),
+
+	/* eMMC reset */
+	MX6_PAD_NANDF_CS0__GPIO6_IO11		| MUX_PAD_CTRL(NO_PAD_CTRL),
+	/* eMMC write protect indicator*/
+	MX6_PAD_EIM_D26__GPIO3_IO26			| MUX_PAD_CTRL(NO_PAD_CTRL),
+
+	/* 2.5V power enable */
+	MX6_PAD_EIM_D21__GPIO3_IO21			| MUX_PAD_CTRL(NO_PAD_CTRL),
+
+	/* USB_PWR1 */
+	MX6_PAD_NANDF_WP_B__GPIO6_IO09		| MUX_PAD_CTRL(NO_PAD_CTRL),
+	/* USB_PWR2 */
+	MX6_PAD_NANDF_CS1__GPIO6_IO14		| MUX_PAD_CTRL(NO_PAD_CTRL),
+	/* USB_PWR3 */
+	MX6_PAD_GPIO_5__GPIO1_IO05			| MUX_PAD_CTRL(NO_PAD_CTRL),
+	/* USB_PWR4 */
+	MX6_PAD_GPIO_2__GPIO1_IO02			| MUX_PAD_CTRL(NO_PAD_CTRL),
+	/* USB_WIFI */
+	MX6_PAD_GPIO_7__GPIO1_IO07			| MUX_PAD_CTRL(NO_PAD_CTRL),
+	/* USB_HUB1_RESET */
+	MX6_PAD_EIM_A25__GPIO5_IO02			| MUX_PAD_CTRL(NO_PAD_CTRL),
+	/* USB_HUB2_RESET */
+	MX6_PAD_EIM_CS1__GPIO2_IO24			| MUX_PAD_CTRL(NO_PAD_CTRL),
+	/* The OC indication from port 2@USB hub 1 */
+	MX6_PAD_EIM_D23__GPIO3_IO23			| MUX_PAD_CTRL(NO_PAD_CTRL),
+	/* The OC indication from port 1@USB hub 1 */
+	MX6_PAD_EIM_D24__GPIO3_IO24			| MUX_PAD_CTRL(NO_PAD_CTRL),
+	/* The OC indication from port 1@USB hub 2 */
+	MX6_PAD_EIM_D25__GPIO3_IO25			| MUX_PAD_CTRL(NO_PAD_CTRL),
+	/* The OC indication from port 2@USB hub 2 */
+	MX6_PAD_EIM_OE__GPIO2_IO25		| MUX_PAD_CTRL(NO_PAD_CTRL),
+	/* The OC indication from USB WIFI */
+	MX6_PAD_KEY_COL0__GPIO4_IO06		| MUX_PAD_CTRL(NO_PAD_CTRL),
+
+	/* CPLD_RSESERVED1 */
+	MX6_PAD_ENET_RXD0__GPIO1_IO27		| MUX_PAD_CTRL(NO_PAD_CTRL),
+	/* CPLD_RSESERVED2 */
+	MX6_PAD_ENET_TXD0__GPIO1_IO30		| MUX_PAD_CTRL(NO_PAD_CTRL),
+
+	/* VGA_HOTPLUG */
+	MX6_PAD_KEY_ROW0__GPIO4_IO07		| MUX_PAD_CTRL(NO_PAD_CTRL),
+	/* HDMI_INTERRUPT */
+	MX6_PAD_KEY_COL1__GPIO4_IO08		| MUX_PAD_CTRL(NO_PAD_CTRL),
+
+	/* HEADPHONE DETECT */
+	MX6_PAD_KEY_ROW1__GPIO4_IO09		| MUX_PAD_CTRL(NO_PAD_CTRL),
+	/* MICROPHONE DETECT */
+	MX6_PAD_GPIO_9__GPIO1_IO09			| MUX_PAD_CTRL(NO_PAD_CTRL),
+
+	/* non-gpio mux */
+	/* I2C3 */
+	MX6_PAD_GPIO_3__I2C3_SCL			| MUX_PAD_CTRL(I2C_PAD_CTRL),
+	MX6_PAD_GPIO_6__I2C3_SDA			| MUX_PAD_CTRL(I2C_PAD_CTRL),
+};
+
+static void setup_iomux_gpio(void)
+{
+	imx_iomux_v3_setup_multiple_pads(gpio_pads, ARRAY_SIZE(gpio_pads));
+
+	gpio_direction_input(PROJECT_DET0);
+	gpio_direction_input(PROJECT_DET1);
+	gpio_direction_input(PROJECT_DET2);
+	gpio_direction_input(PCB_DET0);
+	gpio_direction_input(PCB_DET1);
+	gpio_direction_input(OC_USB_HUB2_PORT1);
+	gpio_direction_input(OC_USB_HUB1_PORT1);
+	gpio_direction_input(OC_USB_HUB1_PORT2);
+	gpio_direction_input(OC_USB_HUB2_PORT2);
+	gpio_direction_input(OC_USB_WIFI);
+	gpio_direction_input(EMMC_WRITE_PROTECT);
+	gpio_direction_input(HEADPHONE_DET);
+	gpio_direction_input(MICROPHONE_DET);
+	gpio_direction_input(AUTO_SDN_EVT);
+	gpio_direction_input(AUTO_SDN);
+}
+
 iomux_v3_cfg_t const uart1_pads[] = {
 	MX6_PAD_CSI0_DAT10__UART1_TX_DATA | MUX_PAD_CTRL(UART_PAD_CTRL),
 	MX6_PAD_CSI0_DAT11__UART1_RX_DATA | MUX_PAD_CTRL(UART_PAD_CTRL),
@@ -225,7 +342,7 @@ int board_mmc_init(bd_t *bis)
 	 */
 	for (i = 0; i < CONFIG_SYS_FSL_USDHC_NUM; i++) {
 		switch (i) {
-		case 0:
+		/*case 0:
 			imx_iomux_v3_setup_multiple_pads(
 				usdhc2_pads, ARRAY_SIZE(usdhc2_pads));
 			gpio_direction_input(USDHC2_CD_GPIO);
@@ -236,6 +353,9 @@ int board_mmc_init(bd_t *bis)
 				usdhc3_pads, ARRAY_SIZE(usdhc3_pads));
 			gpio_direction_input(USDHC3_CD_GPIO);
 			usdhc_cfg[1].sdhc_clk = mxc_get_clock(MXC_ESDHC3_CLK);
+			break;*/
+		case 0:
+		case 1:
 			break;
 		case 2:
 			imx_iomux_v3_setup_multiple_pads(
@@ -437,6 +557,7 @@ int board_eth_init(bd_t *bis)
 int board_early_init_f(void)
 {
 	setup_iomux_uart();
+	setup_iomux_gpio();
 #if defined(CONFIG_VIDEO_IPUV3)
 	setup_display();
 #endif
@@ -449,9 +570,9 @@ int board_init(void)
 	/* address of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
 
-#ifdef CONFIG_MXC_SPI
+/*#ifdef CONFIG_MXC_SPI
 	setup_spi();
-#endif
+#endif*/
 	setup_i2c(1, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
 
 	/* make cpld check t66 still alive */
@@ -463,12 +584,12 @@ int board_init(void)
 	return 0;
 }
 
-#ifdef CONFIG_MXC_SPI
+/*#ifdef CONFIG_MXC_SPI
 int board_spi_cs_gpio(unsigned bus, unsigned cs)
 {
 	return (bus == 0 && cs == 0) ? (IMX_GPIO_NR(4, 9)) : -1;
 }
-#endif
+#endif*/
 
 #ifdef CONFIG_CMD_BMODE
 static const struct boot_mode board_boot_modes[] = {
@@ -481,15 +602,6 @@ static const struct boot_mode board_boot_modes[] = {
 };
 #endif
 
-int board_late_init(void)
-{
-#ifdef CONFIG_CMD_BMODE
-	add_board_boot_modes(board_boot_modes);
-#endif
-
-	return 0;
-}
-
 static int project = 0;
 static int pcb = 0;
 int checkboard(void)
@@ -497,34 +609,19 @@ int checkboard(void)
 	puts("Board: MX6-SabreSD ");
 
 	project = t66_get_project_version();
-	pcb = t66_get_pcb_version();
 	switch(project) {
 	case 0:
-		printf(" t66(");
+		printf(" t66\n");
 		break;
 	case 1:
-		printf(" t67(");
+		printf(" t67\n");
 		break;
 	case 2:
-		printf(" A66(");
+		printf(" A66\n");
 		break;
 	default:
 		printf("unknown");
 	}
-	switch(pcb) {
-	case 0:
-		printf("EVT");
-		break;
-	case 1:
-		printf("DVT");
-		break;
-	case 2:
-		printf("PVT");
-		break;
-	default:
-		printf("unknown");
-	}
-	printf(")\n");
 
 	return 0;
 }
@@ -540,6 +637,7 @@ void t66_set_board_version(void)
 			setenv("board", "DVT");
 			break;
 		case 2:
+		case 3:
 			setenv("board", "PVT");
 			break;
 		default:
@@ -634,6 +732,7 @@ void t66_reset_device(void)
 	/* vga */
 
 	/* lan */
+	//t66_reset_pcie();
 
 	/* usb */
 
@@ -645,11 +744,12 @@ void t66_reset_device(void)
 
 int misc_init_r(void)
 {
+	pcb = t66_get_pcb_version();
 	char * disp_detect = getenv ("disp_detect");
 	char * model = getenv ("system-product-name");
 	u32 disp_type = 0;
 
-	t66_check_last_state();
+	//t66_check_last_state();
 	t66_enable_usb_hub(1);
 	t66_reset_device();
 
@@ -668,3 +768,13 @@ int misc_init_r(void)
 	return 0;
 }
 #endif /* CONFIG_MISC_INIT_R */
+
+int board_late_init(void)
+{
+	t66_check_last_state();
+#ifdef CONFIG_CMD_BMODE
+	add_board_boot_modes(board_boot_modes);
+#endif
+
+	return 0;
+}

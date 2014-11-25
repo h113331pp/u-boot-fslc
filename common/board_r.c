@@ -860,9 +860,7 @@ init_fnc_t init_sequence_r[] = {
 #ifdef CONFIG_CMD_NET
 	initr_ethaddr,
 #endif
-#ifdef CONFIG_BOARD_LATE_INIT
-	board_late_init,
-#endif
+
 #ifdef CONFIG_CMD_SCSI
 	INIT_FUNC_WATCHDOG_RESET
 	initr_scsi,
@@ -877,6 +875,9 @@ init_fnc_t init_sequence_r[] = {
 #ifdef CONFIG_CMD_NET
 	INIT_FUNC_WATCHDOG_RESET
 	initr_net,
+#endif
+#ifdef CONFIG_BOARD_LATE_INIT
+	board_late_init,
 #endif
 #ifdef CONFIG_POST
 	initr_post,
