@@ -785,6 +785,10 @@ u-boot-dtb.bin: u-boot.bin dts/dt.dtb FORCE
 
 %.imx: %.bin
 	$(Q)$(MAKE) $(build)=arch/arm/imx-common $@
+	dd if=u-boot.imx of=u-boot.temp bs=64 seek=15
+	$(objtree)/tools/mkimage -A arm -T firmware -C none \
+		-n $(shell ./get_env_info.sh) -d u-boot.temp u-boot.emmc
+	rm u-boot.temp
 
 quiet_cmd_copy = COPY    $@
       cmd_copy = cp $< $@
