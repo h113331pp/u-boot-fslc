@@ -28,11 +28,10 @@ typedef enum {
 	PVT,
 } pcb_version;
 
-#define LED_ORANGE_EVT		IMX_GPIO_NR(1, 1)
-
 #define POWER_BTN 			IMX_GPIO_NR(2, 23)
 
 #define PWR_2V5 			IMX_GPIO_NR(3, 21)
+#define LED_ORANGE_EVT		IMX_GPIO_NR(1, 1)
 #define LED_ORANGE 			IMX_GPIO_NR(3, 22)
 #define LED_BLUE 			IMX_GPIO_NR(7, 13)
 
@@ -40,6 +39,7 @@ typedef enum {
 #define OC_USB_HUB2_PORT2	IMX_GPIO_NR(2, 25)
 #define OC_USB_HUB1_PORT1	IMX_GPIO_NR(3, 24)
 #define OC_USB_HUB1_PORT2	IMX_GPIO_NR(3, 23)
+#define OC_USB_WIFI			IMX_GPIO_NR(4, 6)
 #define USB_HUB1_RESET		IMX_GPIO_NR(5, 2)
 #define USB_HUB2_RESET		IMX_GPIO_NR(2, 24)
 
@@ -47,10 +47,12 @@ typedef enum {
 #define USB_PORT2_POWER		IMX_GPIO_NR(6, 14)
 #define USB_PORT3_POWER		IMX_GPIO_NR(1, 5)
 #define USB_PORT4_POWER		IMX_GPIO_NR(1, 2)
+#define USB_WIFI_POWER		IMX_GPIO_NR(1, 7)
 
 #define PCIE_RESET			IMX_GPIO_NR(4, 5)
 #define ETH_PHY_RESET		IMX_GPIO_NR(1, 25)
 #define EMMC_RESET			IMX_GPIO_NR(6, 11)
+#define EMMC_WRITE_PROTECT	IMX_GPIO_NR(3, 26)
 #define BUTTON_DETECT		IMX_GPIO_NR(7, 12)
 #define AUDIO_POWER			IMX_GPIO_NR(4, 10)
 
@@ -65,6 +67,7 @@ typedef enum {
 #define PROJECT_DET1		IMX_GPIO_NR(2, 2)
 #define PROJECT_DET2		IMX_GPIO_NR(2, 1)
 
+#define AUTO_SDN_EVT		IMX_GPIO_NR(3, 31)
 #define AUTO_SDN			IMX_GPIO_NR(4, 15)
 
 #define CPLD_RSESERVED2		IMX_GPIO_NR(1, 30)
