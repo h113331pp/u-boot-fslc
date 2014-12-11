@@ -684,6 +684,7 @@ NetSetTimeout(ulong iv, thand_f *f)
 	if (iv == 0) {
 		debug_cond(DEBUG_INT_STATE,
 			"--- NetLoop timeout handler cancelled\n");
+		printf("---\n");
 		timeHandler = (thand_f *)0;
 	} else {
 		debug_cond(DEBUG_INT_STATE,
