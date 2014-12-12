@@ -13,10 +13,6 @@ else
     if [ -f u-boot.imx ]; then
         rm -f u-boot.imx
     fi
-
-    if [ -f u-boot.bin_noheader ]; then
-        rm -f u-boot.bin_noheader
-    fi
 fi
 
 make -j4
@@ -30,10 +26,10 @@ if [ -f u-boot.bin ]; then
         echo "no u-boot.usb found"
     fi
 
-    if [ -f u-boot.imx ]; then
-        ls -l u-boot.imx
+    if [ -f u-boot.emmc ]; then
+        ls -l u-boot.emmc
     else
-        echo "no u-boot.imx found"
+        echo "no u-boot.emmc found"
     fi
 else
     echo "Build fail...."
