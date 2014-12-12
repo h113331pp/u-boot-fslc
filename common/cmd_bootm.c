@@ -22,6 +22,8 @@
 #include <linux/err.h>
 #include <u-boot/zlib.h>
 
+#include <t66/mx6_util.h>
+
 DECLARE_GLOBAL_DATA_PTR;
 
 #if defined(CONFIG_CMD_IMI)
@@ -105,6 +107,11 @@ int do_bootm(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 		relocated = 1;
 	}
+#endif
+
+#ifdef CONFIG_CMD_PCI
+	/* must pull pcie_reset low, or t66 will hang on booting kernel */
+	gpio_direction_output(PCIE_RESET, GPIO_LOW);
 #endif
 
 	/* determine if we have a sub command */
