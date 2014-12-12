@@ -548,8 +548,11 @@ int overwrite_console(void)
 
 int board_eth_init(bd_t *bis)
 {
-	setup_iomux_enet();
+#ifdef CONFIG_CMD_PCI
 	setup_pcie();
+#else
+	setup_iomux_enet();
+#endif
 
 	return cpu_eth_init(bis);
 }
@@ -606,22 +609,7 @@ static int project = 0;
 static int pcb = 0;
 int checkboard(void)
 {
-	puts("Board: MX6-SabreSD ");
-
-	project = t66_get_project_version();
-	switch(project) {
-	case 0:
-		printf(" t66\n");
-		break;
-	case 1:
-		printf(" t67\n");
-		break;
-	case 2:
-		printf(" A66\n");
-		break;
-	default:
-		printf("unknown");
-	}
+	puts("Board: MX6-SabreSD \n");
 
 	return 0;
 }
@@ -745,11 +733,11 @@ void t66_reset_device(void)
 int misc_init_r(void)
 {
 	pcb = t66_get_pcb_version();
+	project = t66_get_project_version();
 	char * disp_detect = getenv ("disp_detect");
 	char * model = getenv ("system-product-name");
 	u32 disp_type = 0;
 
-	//t66_check_last_state();
 	t66_enable_usb_hub(1);
 	t66_reset_device();
 
