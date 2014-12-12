@@ -1052,7 +1052,7 @@ static int rtl_init(struct eth_device *dev, bd_t *bis)
 		udelay(100);
 
 		/* wait for auto-negotiation process */
-		for (i = 10000; i > 0; i--) {
+		for (i = 100; i > 0; i--) {
 			/* check if auto-negotiation complete */
 			if (mdio_read(PHY_STAT_REG) & PHY_Auto_Nego_Comp) {
 				udelay(100);
