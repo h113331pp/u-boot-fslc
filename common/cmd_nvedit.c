@@ -699,6 +699,15 @@ U_BOOT_CMD(
 	"save environment variables to persistent storage",
 	""
 );
+
+int do_env_destroy(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	printf("invalidate the uboot enviroment\n");
+	set_default_env("!bad CRC");
+	printf("write invalidate enviroment data to storage\n");
+	return saveenv() ? 1 : 0;
+}
+
 #endif
 #endif /* CONFIG_SPL_BUILD */
 
@@ -1127,6 +1136,7 @@ static cmd_tbl_t cmd_env_sub[] = {
 #endif
 #if defined(CONFIG_CMD_SAVEENV) && !defined(CONFIG_ENV_IS_NOWHERE)
 	U_BOOT_CMD_MKENT(save, 1, 0, do_env_save, "", ""),
+	U_BOOT_CMD_MKENT(destroy, 1, 0, do_env_destroy, "", ""),
 #endif
 	U_BOOT_CMD_MKENT(set, CONFIG_SYS_MAXARGS, 0, do_env_set, "", ""),
 #if defined(CONFIG_CMD_ENV_EXISTS)
@@ -1199,6 +1209,7 @@ static char env_help_text[] =
 #endif
 #if defined(CONFIG_CMD_SAVEENV) && !defined(CONFIG_ENV_IS_NOWHERE)
 	"env save - save environment\n"
+	"env destroy - destroy saved environment, use defult environment\n"
 #endif
 	"env set [-f] name [arg ...]\n";
 #endif
