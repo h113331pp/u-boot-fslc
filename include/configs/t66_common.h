@@ -118,7 +118,6 @@
 		"system-product-name=und\0" \
 		"loadaddr=0x10800000\0" \
 		"loadaddr_uinitrd=0x10C00000\0" \
-		"rd_loadaddr=${loadaddr_uinitrd}\0" \
 		"ac-type=poweroff\0" \
 		"autoload=no\0" \
 		"netdev=eth0\0" \
@@ -156,7 +155,7 @@
 		"rootargs_nfs=setenv rootargs root=/dev/nfs nfsroot=${nfs_server}:${nfs_path},v3,tcp ip=dhcp\0" \
 		"mmcargs=run rootargs_mmc; run setatb; run kernargs\0" \
 		"nfsargs=run rootargs_nfs; run kernargs\0" \
-		"mmcboot=checkatb; run setmx6args; run setdispargs; run mmcargs; run setnandinitrdname; run mmc_load_kernel; if test \"x${initrd_boot_name}\" = \"xnanduinitrd\"; then run mmc_load_initrd; bootm ${loadaddr} ${rd_loadaddr}; else bootm; fi;\0" \
+		"mmcboot=checkatb; run setmx6args; run setdispargs; run mmcargs; run setnandinitrdname; run mmc_load_kernel; if test \"x${initrd_boot_name}\" = \"xnanduinitrd\"; then run mmc_load_initrd; bootm ${loadaddr} ${loadaddr_uinitrd}; else bootm; fi;\0" \
 		"nfsboot=run setmx6args; run setdispargs; run nfsargs; run mmc_load_kernel; bootm\0" \
 		"uboot_name=u-boot.emmc\0" \
 		"kernel_name=uImage\0" \
@@ -166,16 +165,16 @@
 		"save_mbr=mmc dev 3 0; mmc read ${loadaddr} 0x0 0x2; mmc dev 3 2; mmc open 3 2; mmc write ${loadaddr} 0x0 0x2; mmc close 3 2; mmc bootpart 2 1\0" \
 		"restore_mbr=mmc dev 3 2; mmc open 3 2; mmc read ${loadaddr} 0x0 0x2; mmc close 3 2; mmc dev 3 0; mmc write ${loadaddr} 0x0 0x2; mmc bootpart 2 1;\0" \
 		"mmc_load_kernel=mmc dev 3 0; mmc loadimg ${loadaddr} ${kernel_part_start}\0" \
-		"mmc_load_initrd=mmc dev 3 0; mmc loadimg ${rd_loadaddr} ${initrd_part_start}\0" \
+		"mmc_load_initrd=mmc dev 3 0; mmc loadimg ${loadaddr_uinitrd} ${initrd_part_start}\0" \
 		"setnandinitrdname=if test ${userbutton} != 0 || test ${fwupdate} != 0 " \
 			"|| test \"x${ethlo}\" = \"x0xffffffff\"; then setenv initrd_boot_name nanduinitrd; " \
 			"else setenv initrd_boot_name nanduminiinitrd; fi;\0" \
 		"nfs_getuboot=dhcp && nfs ${loadaddr} ${nfs_server}:${nfs_path}/${uboot_name} && setexpr uboot_size ${filesize} / 200 && setexpr uboot_size ${uboot_size} + 1\0" \
 		"nfs_getkernel=dhcp && nfs ${loadaddr} ${nfs_server}:${nfs_path}/${kernel_name} && setexpr kernel_size ${filesize} / 200 && setexpr kernel_size ${kernel_size} + 1\0" \
-		"nfs_getinitrd=dhcp && nfs ${rd_loadaddr} ${nfs_server}:${nfs_path}/${initrd_name} && setexpr initrd_size ${filesize} / 200 && setexpr initrd_size ${initrd_size} + 1\0" \
+		"nfs_getinitrd=dhcp && nfs ${loadaddr_uinitrd} ${nfs_server}:${nfs_path}/${initrd_name} && setexpr initrd_size ${filesize} / 200 && setexpr initrd_size ${initrd_size} + 1\0" \
 		"update_uboot=run nfs_getuboot && mmc dev 3 1 && mmc open 3 1 && mmc write ${loadaddr} 0x0 ${uboot_size} ; mmc close 3 1\0" \
 		"update_kernel=run nfs_getkernel && mmc dev 3 0 && mmc write ${loadaddr} ${kernel_part_start} ${kernel_size}\0" \
-		"update_initrd=run nfs_getinitrd && mmc dev 3 0 && mmc write ${rd_loadaddr} ${initrd_part_start} ${initrd_size}\0" \
+		"update_initrd=run nfs_getinitrd && mmc dev 3 0 && mmc write ${loadaddr_uinitrd} ${initrd_part_start} ${initrd_size}\0" \
 		"disp_detect=on\0" \
 		"cpld_boot_detect=true\0" \
 		"ldo_active=on\0" \
