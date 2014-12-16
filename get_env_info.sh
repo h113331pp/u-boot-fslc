@@ -35,7 +35,9 @@ oct_txt_start=`printf "%d" 0x$txt_start`
 check_null oct_txt_start $oct_txt_start
 
 oct_seek_pos=$(expr ${oct_env_start} - ${oct_txt_start} )
-oct_seek_pos=$(expr ${oct_seek_pos} - 64 )
+#from u-boot.bin to u-boot.emmc, default_environment shift 0x1000 (4096)
+# but need minus 64 bytes(mkimage header length)
+oct_seek_pos=$(expr ${oct_seek_pos} + 4096 - 64 )
 check_null oct_seek_pos $oct_seek_pos
 
 seek_pos=`printf "%x" ${oct_seek_pos}`
