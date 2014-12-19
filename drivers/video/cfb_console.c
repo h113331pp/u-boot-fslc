@@ -90,7 +90,7 @@
 #include <version.h>
 #include <malloc.h>
 #include <linux/compiler.h>
-
+#include <t66/mx6_util.h>
 /*
  * Console device defines with SMI graphic
  * Any other graphic must change this section
@@ -2007,8 +2007,8 @@ static void *video_logo(void)
 	}
 #endif /* CONFIG_SPLASH_SCREEN */
 
-	logo_plot(video_fb_address, VIDEO_COLS,
-		  video_logo_xpos, video_logo_ypos);
+	/*logo_plot(video_fb_address, VIDEO_COLS,
+		  video_logo_xpos, video_logo_ypos);*/
 
 #ifdef CONFIG_SPLASH_SCREEN_ALIGN
 	/*
@@ -2033,7 +2033,7 @@ static void *video_logo(void)
 	if (board_cfb_skip())
 		return 0;
 
-	sprintf(info, " %s", version_string);
+	/*sprintf(info, " %s", version_string);*/
 
 	space = (VIDEO_LINE_LEN / 2 - VIDEO_INFO_X) / VIDEO_FONT_WIDTH;
 	len = strlen(info);
