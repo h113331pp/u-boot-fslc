@@ -655,6 +655,7 @@ void t66_set_board_version(void)
 static void t66_set_15_sec_circuit(void)
 {
 	t66_toggle_last_state(LAST_STATE);
+	t66_enable_usb_hub(1);
 	mdelay(500);
 }
 
